@@ -1,4 +1,4 @@
-
+import neuralNetowrk as nn
 
 class Bird ():
 
@@ -13,6 +13,8 @@ class Bird ():
 
         self.bheight = 10
         self.bwidth = 10
+
+        self.brain = nn.neuralNetowrk(2,2,1)
 
 
         self.height = height
