@@ -16,7 +16,7 @@ bird = bird.Bird(WIDTH, HEIGHT)
 pipes = []
 
 
-pcounter = 100
+pcounter = 125
 
 
 def draw():
@@ -35,6 +35,7 @@ def draw():
 
     # Updating the bird
     bird.update()
+    bird.think(pipes)
     # Draw the bird
     pygame.draw.circle(game_display, BLUE, (int(bird.x), int(bird.y)), bird.size)
 

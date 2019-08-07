@@ -40,7 +40,7 @@ class NeuralNetwrok (object):
         pass
 
 
-    def feedForward(self, inputArray):
+    def predict(self, inputArray):
         # convert inputs list to 2d array
         input = array(inputArray, ndmin=2).T
 

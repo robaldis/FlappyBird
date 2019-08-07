@@ -1,4 +1,4 @@
-import neuralNetowrk as nn
+import neuralNetwork as nn
 
 class Bird ():
 
@@ -14,7 +14,7 @@ class Bird ():
         self.bheight = 10
         self.bwidth = 10
 
-        self.brain = nn.neuralNetowrk(2,2,1)
+        self.brain = nn.NeuralNetwrok(2,6,1, 0.1)
 
 
         self.height = height
@@ -22,6 +22,29 @@ class Bird ():
 
     def up(self):
         self.vel = self.lift
+
+
+    def think(self, pipes):
+        closest = None
+        closestD = 10000000
+        for pipe in pipes:
+            d = pipe.x - self.x
+            if d < closestD and d > 0:
+                closest = pipe
+                closestD = d
+
+        input = []
+        if (closest != None):
+            # Inputs
+            input.append(self.x - closest.x)
+            input.append(self.y - closest.top)
+
+
+        # Brain predicts if it should flap or not
+        output = self.brain.predict(input)
+        # To Flap or not to Flap
+        if(output[0] > 0.5):
+            self.up()
 
 
 
