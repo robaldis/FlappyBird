@@ -21,9 +21,6 @@ class Pipe(object):
         halfBirdHeight = bird.height
         halfBirdWidth = bird.width
 
-        # if bird.y - halfBirdHeight > self.bottom:
-        #     return True
-
         if bird.y < self.top or bird.y > self.bottom:
             #if self.w is huge, then we need different collision model
             if bird.x > self.x and bird.x < self.x + self.w:
@@ -34,6 +31,8 @@ class Pipe(object):
             self.highlight = False
             return False
 
+
+    def scored(self, bird):
         if bird.x > self.x and self.passed == False:
             self.passed = True
             bird.score += 1

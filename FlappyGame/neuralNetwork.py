@@ -28,9 +28,6 @@ class NeuralNetwrok (object):
         self.bias_o = ndarray(shape = (self.output_nodes, 1))
         self.bias_h = self.randomWeights(self.bias_h)
         self.bias_o = self.randomWeights(self.bias_o)
-        # self.bias_h = matrix.transpose(self.bias_h)
-        # self.bias_o = matrix.transpose(self.bias_o)
-
 
         self.lr = lr
 
@@ -120,8 +117,12 @@ class NeuralNetwrok (object):
     def copy(self):
         return NeuralNetwrok(self)
 
-    def mutate(self):
+    def mutate(self, mutation):
         # Add in how the weights mutate
+        self.weights_ho = self.weights_ho + mutation
+        self.weights_ih = self.weights_ih + mutation
+        self.bias_h = self.bias_h + mutation
+        self.bias_o = self.bias_o + mutation
         pass
 
 
