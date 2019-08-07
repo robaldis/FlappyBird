@@ -5,6 +5,8 @@ from pipe import Pipe
 WIDTH = 600
 HEIGHT = 800
 
+GEN_SIZE = 100
+
 BLUE = (0,0,255)
 GREY = (30,30,30)
 
@@ -12,7 +14,8 @@ game_display = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Flappy Bird")
 clock = pygame.time.Clock()
 
-bird = bird.Bird(WIDTH, HEIGHT)
+birds = list()
+#bird = bird.Bird(WIDTH, HEIGHT)
 pipes = []
 
 
@@ -33,11 +36,12 @@ def draw():
     if pygame.key.get_pressed()[pygame.K_SPACE]:
         bird.up()
 
-    # Updating the bird
-    bird.update()
-    bird.think(pipes)
-    # Draw the bird
-    pygame.draw.circle(game_display, BLUE, (int(bird.x), int(bird.y)), bird.size)
+    for bird in birds:
+        # Updating the bird
+        bird.update()
+        bird.think(pipes)
+        # Draw the bird
+        pygame.draw.circle(game_display, BLUE, (int(bird.x), int(bird.y)), bird.size)
 
 
 
@@ -56,6 +60,19 @@ def draw():
     pass
 
 
+
+
+
+
+
+def nextGeneration():
+    # Make a new generation
+    for i in range(GEN_SIZE):
+        birds.append(bird.Bird(WIDTH,HEIGHT))
+    pass
+
+
+
 def drawPipes(pipes):
     pygame.draw.rect(game_display, GREY, [pipes.x, 0, pipes.w, pipes.top])
     pygame.draw.rect(game_display, GREY, [pipes.x, pipes.bottom, pipes.w, HEIGHT])
@@ -65,7 +82,13 @@ def drawPipes(pipes):
     pass
 
 
+
+
 def main():
+    nextGeneration()
+
+
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -76,8 +99,6 @@ def main():
         draw()
         # Keep the refresh rate to 60
         clock.tick(60)
-
-
 
 if (__name__ == "__main__"):
     main()

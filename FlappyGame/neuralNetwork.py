@@ -117,6 +117,13 @@ class NeuralNetwrok (object):
 
 
 
+    def copy(self):
+        return NeuralNetwrok(self)
+
+    def mutate(self):
+        # Add in how the weights mutate
+        pass
+
 
     def randomWeights(self, n):
         for i in range(size(n, 0)):
