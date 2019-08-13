@@ -6,7 +6,7 @@ import random
 WIDTH = 600
 HEIGHT = 700
 
-GEN_SIZE = 100
+GEN_SIZE = 2000
 
 BLUE = (0,0,255)
 GREY = (30,30,30)
@@ -19,11 +19,14 @@ birds = list()
 savedBirds = list()
 pipes = []
 
+generation = 1
+print (f"Generation Number: {generation}")
+
 pcounter = 125
 
 
 # Start the first generation of birds
-for i in range(GEN_SIZE):
+for i in range(20000):
     birds.append(Bird(WIDTH, HEIGHT))
 
 
@@ -42,6 +45,7 @@ def draw():
     if pygame.key.get_pressed()[pygame.K_SPACE]:
         bird.up()
 
+    # pygame.draw.circle(game_display, BLUE, (int(birds[0].x), int(birds[0].y)), birds[0].size)
     # Update All the birds
     for bird in birds:
         # Updating the bird
@@ -53,19 +57,25 @@ def draw():
 
         # For each bird check each pipe to see if it has hit
         for pipe in pipes:
-            if (pipe.scored(bird)):
-                print("Scored")
-
             if (pipe.hits(bird)):
                 # Remove the bird from the list
                 savedBirds.append(bird)
                 birds.remove(bird)
                 continue #
         if bird.y > HEIGHT - 20:
-            if (bird):
-                # Remove the bird from the list
-                savedBirds.append(bird)
+            # Remove the bird from the list
+            savedBirds.append(bird)
+            try:
                 birds.remove(bird)
+            except:
+                continue
+        if bird.y < (0 + 20):
+            # Remove the bird from the list
+            savedBirds.append(bird)
+            try:
+                birds.remove(bird)
+            except:
+                continue
 
     # Update and draw pipes
     for pipe in pipes:
@@ -84,38 +94,60 @@ def draw():
     pass
 
 
+def normalize(birds):
+    for i in range(len(birds)):
+        birds[i].score = pow(birds[i].score, 2)
+
+
+
 def calculateFitness():
     sum = 0
     for bird in savedBirds:
         sum += bird.score
-        print(f"score {bird.score}")
 
-    print(f"this is the sum {sum}")
     for bird in savedBirds:
-        bird.fitness += bird.score / sum
+        bird.fitness = bird.score / sum
 
 
 def pickOne():
     fitness = 0
+    index = 0
     bird = None
-    for sbird in savedBirds:
-        if sbird.fitness > fitness:
-            fitness = sbird.fitness
-            bird = sbird
-    child = Bird(WIDTH,HEIGHT, bird.brain)
-    #child.mutate(random.uniform(0,0.1))
+    r = random.random()
+    while (r >  0):
+        r = r - savedBirds[index].fitness
+        index += 1
+
+
+    for b in savedBirds:
+        if (fitness < b.fitness):
+            fitness = b.fitness
+            bird = b
+    index -= 1
+    # bird = savedBirds[index]
+    child = Bird(WIDTH,HEIGHT, bird.brain.copy())
+    #print (child.brain.weights_ho)
+    child.mutate(0.2)
+    #print (child.brain.weights_ho)
 
     return child
 
 
 def nextGeneration():
+    global generation, savedBirds
+    generation += 1
+    print (f"Generation Number: {generation}")
 
+
+    # normalize(savedBirds)
     calculateFitness()
 
     # Make a new generation
     for i in range(GEN_SIZE):
         birds.append(pickOne())
     savedBirds = list()
+    #for i in range (len(birds)):
+        #birds[i].mutate()
 
 
 def drawPipes(pipes):

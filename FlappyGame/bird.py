@@ -16,7 +16,7 @@ class Bird ():
         self.bheight = 10
         self.bwidth = 10
         if brain == None:
-            self.brain = nn.NeuralNetwrok(2,6,1, 0.1)
+            self.brain = nn.NeuralNetwrok(5,6,1, 0.1)
         else:
             self.brain = brain
 
@@ -37,16 +37,22 @@ class Bird ():
                 closest = pipe
                 closestD = d
 
+
         input = []
         if (closest != None):
             # Inputs
-            input.append(self.x - closest.x)
-            input.append(self.y - closest.top)
+            input.append(self.y)
+            input.append(closest.x)
+            input.append(closest.top)
+            input.append(closest.bottom)
+            input.append(self.vel)
 
-        if (len(input) != 2):
+        if (len(input) != 5):
             print("ERROR")
             input.append(0)
             input.append(0)
+            input.append(0)
+
         # Brain predicts if it should flap or not
         output = self.brain.predict(input)
         # To Flap or not to Flap
@@ -54,13 +60,19 @@ class Bird ():
             self.up()
 
 
-    def mutate(self,n):
-        self.brain.mutate(n)
+    def mutate(self, rate):
+        self.brain.mutate(self.brain.weights_ho, rate)
+        self.brain.mutate(self.brain.weights_ih, rate)
+        self.brain.mutate(self.brain.bias_h, rate)
+        self.brain.mutate(self.brain.bias_o, rate)
+
 
 
     def update(self):
         self.vel += self.gravity
         self.y += self.vel
+
+        self.score += 1
 
         if (self.y >= self.height - self.bheight):
               self.y = self.height - self.bheight
