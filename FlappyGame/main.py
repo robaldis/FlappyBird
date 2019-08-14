@@ -124,10 +124,10 @@ def pickOne():
             fitness = b.fitness
             bird = b
     index -= 1
-    # bird = savedBirds[index]
+    bird = savedBirds[index]
     child = Bird(WIDTH,HEIGHT, bird.brain.copy())
     #print (child.brain.weights_ho)
-    child.mutate(0.2)
+    child.mutate(0.01)
     #print (child.brain.weights_ho)
 
     return child

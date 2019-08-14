@@ -3,7 +3,7 @@ import random
 class Pipe(object):
 
     def __init__(self, width, height):
-        self.spacing = 200
+        self.spacing = 120
         self.top = random.randint(int(height / 6),int( 3 / 4* height))
         self.bottom = self.top + self.spacing
 
