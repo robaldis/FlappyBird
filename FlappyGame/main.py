@@ -2,11 +2,12 @@ import pygame
 from bird import Bird
 from pipe import Pipe
 import random
+from numba import vectorize
 
 WIDTH = 600
 HEIGHT = 700
 
-GEN_SIZE = 2000
+GEN_SIZE = 200
 
 BLUE = (0,0,255)
 GREY = (30,30,30)
@@ -26,9 +27,8 @@ pcounter = 125
 
 
 # Start the first generation of birds
-for i in range(20000):
+for i in range(GEN_SIZE):
     birds.append(Bird(WIDTH, HEIGHT))
-
 
 
 def draw():
@@ -99,7 +99,6 @@ def normalize(birds):
         birds[i].score = pow(birds[i].score, 2)
 
 
-
 def calculateFitness():
     sum = 0
     for bird in savedBirds:
@@ -107,7 +106,6 @@ def calculateFitness():
 
     for bird in savedBirds:
         bird.fitness = bird.score / sum
-
 
 def pickOne():
     fitness = 0
@@ -124,14 +122,13 @@ def pickOne():
             fitness = b.fitness
             bird = b
     index -= 1
-    bird = savedBirds[index]
+    # bird = savedBirds[index]
     child = Bird(WIDTH,HEIGHT, bird.brain.copy())
     #print (child.brain.weights_ho)
-    child.mutate(0.01)
+    child.mutate(0.2)
     #print (child.brain.weights_ho)
 
     return child
-
 
 def nextGeneration():
     global generation, savedBirds

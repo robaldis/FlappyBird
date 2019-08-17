@@ -16,7 +16,7 @@ class Bird ():
         self.bheight = 10
         self.bwidth = 10
         if brain == None:
-            self.brain = nn.NeuralNetwrok(5,6,1, 0.1)
+            self.brain = nn.NeuralNetwrok(4, 4, 1, 0.1)
         else:
             self.brain = brain
 
@@ -32,7 +32,7 @@ class Bird ():
         closest = None
         closestD = 10000000
         for pipe in pipes:
-            d = pipe.x - self.x
+            d = pipe.x - (self.x - 100)
             if d < closestD and d > 0:
                 closest = pipe
                 closestD = d
@@ -41,17 +41,12 @@ class Bird ():
         input = []
         if (closest != None):
             # Inputs
-            input.append(self.y)
-            input.append(closest.x)
-            input.append(closest.top)
-            input.append(closest.bottom)
+            input.append(self.x - closest.x)
+            input.append(self.y - closest.top)
+            input.append(self.y - closest.bottom)
             input.append(self.vel)
 
-        if (len(input) != 5):
-            print("ERROR")
-            input.append(0)
-            input.append(0)
-            input.append(0)
+
 
         # Brain predicts if it should flap or not
         output = self.brain.predict(input)

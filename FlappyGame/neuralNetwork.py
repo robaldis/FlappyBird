@@ -148,7 +148,9 @@ class NeuralNetwrok (object):
         inds = np.random.choice(
             temp.size, size=num_to_change)   # Get random indices
         # multiply weights by random # from -2 to 2)
-        temp[inds] = temp[inds] + np.random.uniform(-0.1, 0.1, size=num_to_change)
+        temp[inds] = temp[inds] + np.random.uniform(-0.01, 0.01, size=num_to_change)
+        # temp[inds] = np.random.uniform(-1, 1, size=num_to_change)
+
         temp = temp.reshape(shape)                     # Restore original shape
         return temp
 
