@@ -33,11 +33,7 @@ class Pipe(object):
 
 
     def scored(self, bird):
-        if bird.x > self.x and self.passed == False:
             self.passed = True
-            bird.score += 1
-            print (bird.score)
-
 
 
     def update(self):
