@@ -11,6 +11,7 @@ class Bird ():
         self.vel = 0
 
         self.score = 0
+        self.pipeScore = 0
         self.fitness = 0
 
         self.bheight = 10
@@ -18,7 +19,7 @@ class Bird ():
         if brain == None:
             self.brain = nn.NeuralNetwrok(4, 4, 1, 0.1)
         else:
-            self.brain = brain
+            self.brain = nn.NeuralNetwrok(oldBrain = brain)
 
 
         self.height = height
@@ -47,12 +48,13 @@ class Bird ():
             input.append(self.vel)
 
 
-
-        # Brain predicts if it should flap or not
-        output = self.brain.predict(input)
+        if (len(input) > 0):
+            # Brain predicts if it should flap or not
+            output = self.brain.predict(input)
         # To Flap or not to Flap
         if(output[0] > 0.5):
             self.up()
+            pass
 
 
     def mutate(self, rate):

@@ -3,7 +3,8 @@ import pygame
 from bird import Bird
 from pipe import Pipe
 import random
-from numba import vectorize
+import json
+import numpy as np
 
 #---Variables---
 #--Constants--
@@ -17,18 +18,172 @@ BLUE = (0,0,255)
 GREY = (30,30,30)
 WHITE = (255,255,255)
 
-#--Globals--
-birds = list() # Hold the info for the birds that are ALIVE
-savedBirds = list() # Hold the info for the birds that are DEAD
 
-pipes = [] # Holds the info for all the pipes
+class Game ():
+    def __init__(self, game_display):
 
-highscore = 0 # contains the highscore
-generation = 1 # What generation we are on
+        self.game_display = game_display
 
-pcounter = 125 # counter for how oftern the pipes show up
+        self.pipeRate = 0
+        self.pipes = list()
+        self.birds = list()
+        self.savedBirds = list()
 
-F = None # holds the font
+        # Scoring
+        self.highscore = 0
+        self.generation = 1
+
+        # setting up fonts with the size and type
+        self.FONT_28 = pygame.font.SysFont("Times New Roman, Arial", 28)
+        self.FONT_72 = pygame.font.SysFont("Times New Roman, Arial", 72)
+
+        self.HUD = HUDElements()
+
+        self.text = [None] * 3
+        # Sets up text to render onto the screen
+        self.HUD.addElement("score", ScreenElement("", 10, 20, element = "text"))
+        self.HUD.addElement("generation", ScreenElement("", 10,50, element = "text"))
+        self.HUD.addElement("population", ScreenElement("", 10, 90, element = "text"))
+        self.HUD.addElement("info1", ScreenElement(self.FONT_28.render("To save a bird press S", True, GREY), 10, HEIGHT - 110, element = "text"))
+        self.HUD.addElement("info2", ScreenElement(self.FONT_28.render("To load a bird brain press R", True, GREY), 10, HEIGHT - 70, element = "text"))
+
+        # self.HUD.addElement("Button", ScreenElement(self.FONT_28.render("QUIT", False, WHITE), 10, HEIGHT - 90, (170, 80), (0,66,99), "Button"))
+
+    def Draw(self):
+        # fill the screen in grey
+        self.game_display.fill((0,0,0))
+
+
+        # --Update all the birds--
+        for bird in self.birds:
+            bird.think(self.pipes)
+            bird.update()
+            # Draw the bird
+            pygame.draw.circle(self.game_display, BLUE, (int(bird.x), int(bird.y)), bird.size)
+
+
+        # Adding Pipes
+        if (self.pipeRate == 125):
+            self.pipeRate = 0
+            self.pipes.append(Pipe(WIDTH, HEIGHT, GEN_SIZE))
+        self.pipeRate += 1
+
+        # Update all the pipes
+        for pipe in self.pipes:
+            if (pipe.x < -150):
+                self.pipes.remove(pipe)
+            else:
+                pipe.update()
+                self.drawPipes(pipe)
+
+        # Check all the collisions
+        self.checkCollision()
+
+        # Reset the game when there are no birds
+        if (len(self.birds) == 0):
+            self.resetGame()
+            self.birds = nextGeneration(self.generation, self.savedBirds, self.birds)
+
+        self.highscore = self.birds[0].pipeScore
+
+        # Update HUD
+        self.HUD.Get()["score"].text = self.FONT_28.render(f"Score: {self.highscore}", True, WHITE)
+        self.HUD.Get()["generation"].text = self.FONT_28.render(f"Generation Number: {self.generation}", True, WHITE)
+        self.HUD.Get()["population"].text = self.FONT_28.render(f"Generation Population: {len(self.birds)}", True, WHITE)
+
+
+
+        # Draw All the text
+        for index, item  in self.HUD.Get().items():
+            item.DrawText(self.game_display)
+
+
+        # Update the display
+        pygame.display.update()
+
+
+    # Draw the pipes
+    def drawPipes(self, pipes):
+        pygame.draw.rect(self.game_display, GREY, [pipes.x, 0, pipes.w, pipes.top])
+        pygame.draw.rect(self.game_display, GREY, [pipes.x, pipes.bottom, pipes.w, HEIGHT])
+        pass
+
+
+    def checkCollision(self):
+        index = 0
+
+        # --Check for collision--
+        for bird in list(self.birds):
+            hit = False
+            # Hit the bottom
+            if (bird.y > HEIGHT - 20 and hit == False):
+                self.savedBirds.append(bird)
+                self.birds.remove(bird)
+                hit = True
+
+            # Hit the top
+            if (bird.y < (0 + 20) and hit == False):
+                self.savedBirds.append(bird)
+                self.birds.remove(bird)
+                hit = True
+
+            for pipe in list(self.pipes):
+                # Gone through the gate
+                if (bird.x > pipe.x and pipe.passed[index] == False):
+                    pipe.scored(bird)
+                    bird.pipeScore += 1
+                    pipe.passed[index] = True
+
+                if (pipe.hits(bird) and hit == False):
+                    self.savedBirds.append(bird)
+                    hit = True
+                    self.birds.remove(bird)
+            index   += 1
+
+
+    # Reset the game
+    def resetGame(self, training = True, jsonData= None):
+        self.highscore = 0
+        self.generation += 1
+        self.birds = list()
+        self.pipes.clear()
+        self.pipes.append(Pipe(WIDTH, HEIGHT, GEN_SIZE))
+        self.pipeRate = 0
+
+
+
+        if (training == False):
+            self.birds.append(Bird(WIDTH,HEIGHT,jsonData))
+            self.generation = 0
+
+
+class ScreenElement():
+    def __init__(self, text,x , y, size = (0,0), colour = (0,0,0,0), element = ""):
+        self.element = element
+        self.x = x
+        self.y = y
+        self.width = size[0]
+        self.height = size[1]
+        self.colour = colour
+        self.text = text
+
+
+    def DrawText(self, game_display):
+        if (self.element == "text"):
+            game_display.blit(self.text, (self.x,self.y))
+        elif (self.element ==  "Button"):
+            button = pygame.draw.rect(game_display, self.colour, [self.x, self.y, self.width, self.height])
+            game_display.blit(self.text, button.center)
+
+class HUDElements():
+    def __init__(self):
+        self.dict = {}
+
+    def addElement(self, Key, Element):
+        self.dict[Key] = Element
+
+    def Get(self):
+        return self.dict
 
 
 #---pygame init---
@@ -38,97 +193,6 @@ game_display = pygame.display.set_mode((WIDTH, HEIGHT)) # Display the window
 pygame.display.set_caption("Flappy Bird")
 clock = pygame.time.Clock()
 
-# setting up fonts with the size and type
-FONT_28 = pygame.font.SysFont("Times New Roman, Arial", 28)
-FONT_72 = pygame.font.SysFont("Times New Roman, Arial", 72)
-
-
-#---Functaions---
-def draw():
-    # Globals
-    global bird, pipes, pcounter, pipe, FONT_28, FONT_72, highscore, generation
-
-    # fill the screen in grey
-    game_display.fill((100,100,100))
-
-
-    # Adding Pipes
-    if (pcounter == 125):
-        pcounter = 0
-        pipes.append(Pipe(WIDTH, HEIGHT))
-    pcounter += 1
-
-    # FLAP
-    if pygame.key.get_pressed()[pygame.K_SPACE]:
-        bird.up()
-
-    # Update all the birds in the array
-    for bird in birds:
-        # Updating the bird
-        bird.update()
-        # AI for the bird
-        bird.think(pipes)
-        # Draw the bird
-        pygame.draw.circle(game_display, BLUE, (int(bird.x), int(bird.y)), bird.size)
-
-        # For each bird check each pipe to see if it has hit
-        for pipe in pipes:
-            if (pipe.hits(bird)):
-                # Remove the bird from the list
-                savedBirds.append(bird)
-                birds.remove(bird)
-                continue
-
-        # Check if the bird is going off the screen
-        if bird.y > HEIGHT - 20:
-            # Remove the bird from the list
-            savedBirds.append(bird)
-            try:
-                birds.remove(bird)
-            except:
-                continue
-
-        if bird.y < (0 + 20):
-            # Remove the bird from the list
-            savedBirds.append(bird)
-            try:
-                birds.remove(bird)
-            except:
-                continue
-
-    # Update and draw pipes
-    for pipe in pipes:
-        if (pipe.x < -150):
-            pipes.remove(pipe)
-        else:
-            pipe.update()
-            drawPipes(pipe)
-
-    # Reset the game when there are no birds
-    if (len(birds) == 0):
-        resetGame()
-        nextGeneration()
-
-
-    # Go theough the birds and pipes to see if the birds have passed the pipe
-    ## TODO: This doesnt seem to be verry efficient may want to change
-    for bird in birds:
-        for pipe in pipes:
-            if bird.x > pipe.x and pipe.passed == False:
-                pipe.scored(bird)
-                highscore += 1
-
-    # Sets up text to render onto the screen
-    textHS =  FONT_28.render(f"Score: {highscore}", True, WHITE)
-    textGen =  FONT_28.render(f"Generation Number: {generation}", True, WHITE)
-
-
-    # Renders the text to the screen
-    game_display.blit( textHS, (10,20))
-    game_display.blit( textGen, (10,50))
-
-    # Update the display
-    pygame.display.update()
 
 # Normalize the fitness
 # set the fitness to between 0 and 1
@@ -138,7 +202,7 @@ def normalize(birds):
 
 # Get the fitness of the bird
 # How well they done in the generation
-def calculateFitness():
+def calculateFitness(savedBirds):
     sum = 0
     for bird in savedBirds:
         sum += bird.score
@@ -148,7 +212,7 @@ def calculateFitness():
 
 # Pick one of the birds from the savedBirds list
 # This is done with probability acording to the fitness
-def pickOne():
+def pickOne(savedBirds):
     fitness = 0
     index = 0
     bird = None
@@ -166,52 +230,42 @@ def pickOne():
     return child # Return the child to add it to the list
 
 # Create a new generation
-def nextGeneration():
-    # Globals
-    global generation, savedBirds
-    generation += 1 # Go to the next generation
-    print (f"Generation Number: {generation}") # Show the new generation to the teminal
-
+def nextGeneration(generation, savedBirds, birds):
     normalize(savedBirds) # normalize fitness
-    calculateFitness() # calculate how well the bird performed
+    calculateFitness(savedBirds) # calculate how well the bird performed
 
     # Make a new generation
     for i in range(GEN_SIZE):
-        birds.append(pickOne()) # create a new list of birds
-    savedBirds = list() # empty the dead birds
+        birds.append(pickOne(savedBirds)) # create a new list of birds
 
-def saveBird():
-    global birds
+    return birds
 
+def saveBird(birds):
     saveinfo = birds[0].brain
-    # Save The file
-
-# Draw the pipes
-def drawPipes(pipes):
-    pygame.draw.rect(game_display, GREY, [pipes.x, 0, pipes.w, pipes.top])
-    pygame.draw.rect(game_display, GREY, [pipes.x, pipes.bottom, pipes.w, HEIGHT])
-    pass
-
-# Reset the game
-def resetGame():
-    global pcounter
-    highscore = 0
-    birds = list()
-    pipes.clear()
-    pipes.append(Pipe(WIDTH, HEIGHT))
-    pcounter = 0
+    dict = {
+            "weights_ih" : saveinfo.weights_ih.tolist(),
+            "weights_ho" : saveinfo.weights_ho.tolist(),
+            "bias_h" : saveinfo.bias_h.tolist(),
+            "bias_o" : saveinfo.bias_o.tolist(),
+    }
+    # Writing JSON data
+    with open("BestBirdBrain.json", 'w') as f:
+        json.dump(dict, f, indent = 4)
 
 
-def main():
-    # Globals
-    global F, WIDTH, HEIGHT
+def readBird():
+    with open("BestBirdBrain.json", "r") as f:
+        jsonData = json.load(f)
+    return jsonData
 
-    print (f"Generation Number: {generation}")
 
+def main(game_display, WIDTH, HEIGHT):
+    game = Game(game_display)
 
     # Start the first generation of birds
     for i in range(GEN_SIZE):
-        birds.append(Bird(WIDTH, HEIGHT))
+        game.birds.append(Bird(WIDTH, HEIGHT))
+    game.pipes.append(Pipe(WIDTH,HEIGHT, GEN_SIZE))
 
     # Keep the game running wile I am playing
     while True:
@@ -224,12 +278,16 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s:
                     # Save bird
-                    saveBird()
+                    saveBird(game.birds)
+                if event.key == pygame.K_r:
+                    # Read the brid brain
+                    game.resetGame(False, readBird())
+
         # Draw to the canvas
-        draw()
+        game.Draw()
         # Keep the refresh rate to
-        clock.tick(240)
+        clock.tick(1024)
 
 # Start program
 if (__name__ == "__main__"):
-    main()
+    main(game_display, WIDTH, HEIGHT)

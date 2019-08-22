@@ -11,17 +11,22 @@ def matrixAdd(a, b):
 
 class NeuralNetwrok (object):
 
-    def __init__(self,input_nodes,hidden_nodes, output_nodes,lr, oldBrain = None):
+    def __init__(self,input_nodes = 0,hidden_nodes = 0, output_nodes = 0 ,lr = 0.1, oldBrain = None):
         self.input_nodes = input_nodes
         self.hidden_nodes = hidden_nodes
         self.output_nodes = output_nodes
 
         if (oldBrain != None):
-            self.weights_ih = oldBrain.weights_ih
-            self.weights_ho = oldBrain.seights_ho
-            self.bias_h = oldbrain.bias_h
-            self.bias_o = oldbrain.bias_o
-
+            if (type(oldBrain) is dict):
+                self.weights_ih = oldBrain["weights_ih"]
+                self.weights_ho = oldBrain["weights_ho"]
+                self.bias_h = oldBrain["bias_h"]
+                self.bias_o = oldBrain["bias_o"]
+            else:
+                self.weights_ih = oldBrain.weights_ih
+                self.weights_ho = oldBrain.weights_ho
+                self.bias_h = oldBrain.bias_h
+                self.bias_o = oldBrain.bias_o
 
         else:
             # Make the weights between the input and hidden and hidden and output
@@ -49,9 +54,11 @@ class NeuralNetwrok (object):
     def predict(self, inputArray):
         # convert inputs list to 2d array
         input = np.array(inputArray, ndmin=2).T
-
-        # Calculate singnals into the hidden layer
-        hiddenInput = np.dot(self.weights_ih, input)
+        try:
+            # Calculate singnals into the hidden layer
+            hiddenInput = np.dot(self.weights_ih, input)
+        except:
+            print (f"{self.weights_ih} \n {self.weights_ho} \n {self.bias_h} \n {self.bias_o}")
         hiddenInput = hiddenInput + self.bias_h
         hiddenOutput = self.activation_function(hiddenInput)
         # hiddenOutput = matrix.transpose(hiddenOutput)
