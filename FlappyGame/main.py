@@ -1,7 +1,9 @@
 #---Imports---
 import pygame
-from bird import Bird
-from pipe import Pipe
+from lib.bird import Bird
+from lib.pipe import Pipe
+from lib.HUD import *
+from lib.GeneticAlgorithm import *
 import random
 import json
 import numpy as np
@@ -26,6 +28,8 @@ class Game ():
         self.pipes = list()
         self.birds = list()
         self.savedBirds = list()
+
+        self.GA = GeneticAlgorithm(GEN_SIZE, WIDTH, HEIGHT)
 
         self.highscore = 0
         self.generation = 1
@@ -77,7 +81,7 @@ class Game ():
         # Reset the game when there are no birds
         if (len(self.birds) == 0):
             self.resetGame()
-            self.birds = nextGeneration(self.generation, self.savedBirds, self.birds)
+            self.birds = self.GA.nextGeneration(self.savedBirds, self.birds)
 
         self.highscore = self.birds[0].pipeScore
 
@@ -146,112 +150,12 @@ class Game ():
             self.generation = 0
 
 
-class TextElement():
-    def __init__(self, font, text,x , y, colour = (0,0,0)):
-        self.x = x
-        self.y = y
-        self.colour = colour
-        self.text = text
-        self.font = font
-
-
-    def Draw(self, game_display):
-        game_display.blit(self.font.render(self.text, True, self.colour), (self.x,self.y))
-
-
-class ButtonElement():
-    def __init__(self,font, text,x , y, size = (0,0), buttonColour = (0,0,0), textColour = (0,0,0)):
-        self.x = x
-        self.y = y
-        self.width = size[1]
-        self.height = size[0]
-        self.buttonColour = buttonColour
-        self.textColour = textColour
-        self.text = text
-        self.font = font
-
-
-    def Draw(self, game_display):
-        button = pygame.draw.rect(game_display, self.buttonColour, [self.x, self.y, self.width, self.height])
-        text = self.font.render(self.text, True, self.textColour)
-        # Moves the text to the center of the button
-        offset = (self.x + (self.width/2 - text.get_width()/2), self.y + (self.height/2 - text.get_height()/2))
-        game_display.blit(text, offset)
-
-
-
 #---pygame init---
 
 pygame.init() # Initialize all imported pygame modules
 game_display = pygame.display.set_mode((WIDTH, HEIGHT)) # Display the window
 pygame.display.set_caption("Flappy Bird")
 clock = pygame.time.Clock()
-
-
-# Normalize the fitness
-# set the fitness to between 0 and 1
-def normalize(birds):
-    for i in range(len(birds)):
-        birds[i].score = pow(birds[i].score, 2)
-
-# Get the fitness of the bird
-# How well they done in the generation
-def calculateFitness(savedBirds):
-    sum = 0
-    for bird in savedBirds:
-        sum += bird.score
-
-    for bird in savedBirds:
-        bird.fitness = bird.score / sum
-
-# Pick one of the birds from the savedBirds list
-# This is done with probability acording to the fitness
-def pickOne(savedBirds):
-    fitness = 0
-    index = 0
-    bird = None
-    r = random.random()
-    while (r >  0):
-        r = r - savedBirds[index].fitness
-        index += 1
-
-    # Go back one to get the index you want
-    index -= 1
-    bird = savedBirds[index]
-    child = Bird(WIDTH,HEIGHT, bird.brain.copy()) # create a new bird with the the last bird brain
-    # Mutate the childs brain
-    child.mutate(0.2) # the probability that the weight will mutate
-    return child # Return the child to add it to the list
-
-# Create a new generation
-def nextGeneration(generation, savedBirds, birds):
-    normalize(savedBirds) # normalize fitness
-    calculateFitness(savedBirds) # calculate how well the bird performed
-
-    # Make a new generation
-    for i in range(GEN_SIZE):
-        birds.append(pickOne(savedBirds)) # create a new list of birds
-
-    return birds
-
-def saveBird(birds):
-    saveinfo = birds[0].brain
-    dict = {
-            "weights_ih" : saveinfo.weights_ih.tolist(),
-            "weights_ho" : saveinfo.weights_ho.tolist(),
-            "bias_h" : saveinfo.bias_h.tolist(),
-            "bias_o" : saveinfo.bias_o.tolist(),
-    }
-    # Writing JSON data
-    with open("BestBirdBrain.json", 'w') as f:
-        json.dump(dict, f, indent = 4)
-
-
-def readBird():
-    with open("BestBirdBrain.json", "r") as f:
-        jsonData = json.load(f)
-    return jsonData
-
 
 def main(game_display, WIDTH, HEIGHT):
     game = Game(game_display)
@@ -272,10 +176,10 @@ def main(game_display, WIDTH, HEIGHT):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s:
                     # Save bird
-                    saveBird(game.birds)
+                    game.GA.saveBird(game.birds)
                 if event.key == pygame.K_r:
                     # Read the brid brain
-                    game.resetGame(False, readBird())
+                    game.resetGame(False, game.GA.readBird())
 
         # Draw to the canvas
         game.Draw()
