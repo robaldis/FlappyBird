@@ -79,5 +79,3 @@ class Bird ():
         if (self.y <= self.bheight):
           self.y = self.bheight / 2
           self.velocity = 0
-
-        pass

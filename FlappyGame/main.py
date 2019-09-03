@@ -1,4 +1,4 @@
-# ----------------------------------Imports-----------------------------------------------------
+#---Imports---
 import pygame
 from bird import Bird
 from pipe import Pipe
@@ -6,14 +6,12 @@ import random
 import json
 import numpy as np
 
-#---Variables---
-#--Constants--
 # Size of the window
 WIDTH = 600
 HEIGHT = 700
 # The size of the generation
 GEN_SIZE = 200
-# colour
+# Colour
 BLUE = (0,0,255)
 GREY = (30,30,30)
 WHITE = (255,255,255)
@@ -29,7 +27,6 @@ class Game ():
         self.birds = list()
         self.savedBirds = list()
 
-        # Scoring
         self.highscore = 0
         self.generation = 1
 
@@ -37,32 +34,30 @@ class Game ():
         self.FONT_28 = pygame.font.SysFont("Times New Roman, Arial", 28)
         self.FONT_72 = pygame.font.SysFont("Times New Roman, Arial", 72)
 
-        self.HUD = HUDElements()
+        # This holds all the hud elements by name
+        self.HUD = {}
 
         self.text = [None] * 3
         # Sets up text to render onto the screen
-        self.HUD.addElement("score", ScreenElement("", 10, 20, element = "text"))
-        self.HUD.addElement("generation", ScreenElement("", 10,50, element = "text"))
-        self.HUD.addElement("population", ScreenElement("", 10, 90, element = "text"))
-        self.HUD.addElement("info1", ScreenElement(self.FONT_28.render("To save a bird press S", True, GREY), 10, HEIGHT - 110, element = "text"))
-        self.HUD.addElement("info2", ScreenElement(self.FONT_28.render("To load a bird brain press R", True, GREY), 10, HEIGHT - 70, element = "text"))
-
-        # self.HUD.addElement("Button", ScreenElement(self.FONT_28.render("QUIT", False, WHITE), 10, HEIGHT - 90, (170, 80), (0,66,99), "Button"))
+        self.HUD["score"] = TextElement(self.FONT_28, "", 10, 20, WHITE)
+        self.HUD["generation"] = TextElement(self.FONT_28, "", 10,50, WHITE)
+        self.HUD["population"] = TextElement(self.FONT_28, "", 10, 90, WHITE)
+        self.HUD["info1"] = TextElement(self.FONT_28,"To save a bird press S", 10, HEIGHT - 110, GREY)
+        self.HUD["info2"] = TextElement(self.FONT_28, "To load a bird brain press R", 10, HEIGHT - 70, GREY)
+        #self.HUD["Button"] = ButtonElement(self.FONT_28, "Button", 100, 100, (50, 200), WHITE, GREY)
 
     def Draw(self):
         # fill the screen in grey
         self.game_display.fill((0,0,0))
 
-
-        # --Update all the birds--
+        # Update all the birds
         for bird in self.birds:
             bird.think(self.pipes)
             bird.update()
             # Draw the bird
             pygame.draw.circle(self.game_display, BLUE, (int(bird.x), int(bird.y)), bird.size)
 
-
-        # Adding Pipes
+        # Adding Pipes to the screen
         if (self.pipeRate == 125):
             self.pipeRate = 0
             self.pipes.append(Pipe(WIDTH, HEIGHT, GEN_SIZE))
@@ -87,16 +82,13 @@ class Game ():
         self.highscore = self.birds[0].pipeScore
 
         # Update HUD
-        self.HUD.Get()["score"].text = self.FONT_28.render(f"Score: {self.highscore}", True, WHITE)
-        self.HUD.Get()["generation"].text = self.FONT_28.render(f"Generation Number: {self.generation}", True, WHITE)
-        self.HUD.Get()["population"].text = self.FONT_28.render(f"Generation Population: {len(self.birds)}", True, WHITE)
-
-
+        self.HUD["score"].text = f"Score: {self.highscore}"
+        self.HUD["generation"].text = f"Generation Number: {self.generation}"
+        self.HUD["population"].text = f"Generation Population: {len(self.birds)}"
 
         # Draw All the text
-        for index, item  in self.HUD.Get().items():
-            item.DrawText(self.game_display)
-
+        for index, item  in self.HUD.items():
+            item.Draw(self.game_display)
 
         # Update the display
         pygame.display.update()
@@ -133,15 +125,14 @@ class Game ():
                     pipe.scored(bird)
                     bird.pipeScore += 1
                     pipe.passed[index] = True
-
+                # Hits the pipe
                 if (pipe.hits(bird) and hit == False):
                     self.savedBirds.append(bird)
                     hit = True
                     self.birds.remove(bird)
-            index   += 1
+            index += 1
 
 
-    # Reset the game
     def resetGame(self, training = True, jsonData= None):
         self.highscore = 0
         self.generation += 1
@@ -150,40 +141,43 @@ class Game ():
         self.pipes.append(Pipe(WIDTH, HEIGHT, GEN_SIZE))
         self.pipeRate = 0
 
-
-
         if (training == False):
             self.birds.append(Bird(WIDTH,HEIGHT,jsonData))
             self.generation = 0
 
 
-class ScreenElement():
-    def __init__(self, text,x , y, size = (0,0), colour = (0,0,0,0), element = ""):
-        self.element = element
+class TextElement():
+    def __init__(self, font, text,x , y, colour = (0,0,0)):
         self.x = x
         self.y = y
-        self.width = size[0]
-        self.height = size[1]
         self.colour = colour
         self.text = text
+        self.font = font
 
 
-    def DrawText(self, game_display):
-        if (self.element == "text"):
-            game_display.blit(self.text, (self.x,self.y))
-        elif (self.element ==  "Button"):
-            button = pygame.draw.rect(game_display, self.colour, [self.x, self.y, self.width, self.height])
-            game_display.blit(self.text, button.center)
+    def Draw(self, game_display):
+        game_display.blit(self.font.render(self.text, True, self.colour), (self.x,self.y))
 
-class HUDElements():
-    def __init__(self):
-        self.dict = {}
 
-    def addElement(self, Key, Element):
-        self.dict[Key] = Element
+class ButtonElement():
+    def __init__(self,font, text,x , y, size = (0,0), buttonColour = (0,0,0), textColour = (0,0,0)):
+        self.x = x
+        self.y = y
+        self.width = size[1]
+        self.height = size[0]
+        self.buttonColour = buttonColour
+        self.textColour = textColour
+        self.text = text
+        self.font = font
 
-    def Get(self):
-        return self.dict
+
+    def Draw(self, game_display):
+        button = pygame.draw.rect(game_display, self.buttonColour, [self.x, self.y, self.width, self.height])
+        text = self.font.render(self.text, True, self.textColour)
+        # Moves the text to the center of the button
+        offset = (self.x + (self.width/2 - text.get_width()/2), self.y + (self.height/2 - text.get_height()/2))
+        game_display.blit(text, offset)
+
 
 
 #---pygame init---

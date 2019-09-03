@@ -3,12 +3,6 @@ from random import *
 import math
 import scipy.special
 
-
-def matrixAdd(a, b):
-    for i in range((np.size(a, 0))):
-        for j in range(np.size(a, 1)):
-            a[i][j] += b[i][j]
-
 class NeuralNetwrok (object):
 
     def __init__(self,input_nodes = 0,hidden_nodes = 0, output_nodes = 0 ,lr = 0.1, oldBrain = None):
@@ -63,7 +57,6 @@ class NeuralNetwrok (object):
         hiddenOutput = self.activation_function(hiddenInput)
         # hiddenOutput = matrix.transpose(hiddenOutput)
 
-
         # Calclate signals into the final layer
         finalInput = np.dot(self.weights_ho, hiddenOutput)
         finalInput = finalInput + self.bias_o
@@ -73,12 +66,10 @@ class NeuralNetwrok (object):
             for j in range(np.size(finalOutput, 1)):
                 finalOutput[i][j] = round(finalOutput[i][j], 2)
 
-
         # Sending it back to the caller
         return finalOutput
 
     def gradientDecent(self, inputArray, targetArray):
-
         # convert inputs list to 2d array
         input = np.array(inputArray, ndmin=2).T
 
@@ -129,25 +120,11 @@ class NeuralNetwrok (object):
         self.bias_h += hiddenGradiants
 
 
-
     def copy(self):
-
         tempBrain = NeuralNetwrok(self.input_nodes, self.hidden_nodes, self.output_nodes, self)
         return tempBrain
 
     def mutate(self, list, probability):
-        # # Mutation changes a single gene in each offspring randomly.
-        # for idx in range(weight.shape[0]):
-        #     for idy in range (weight.shape[1]):
-        #         r = random()
-        #         if (r < rate):
-        #             # The random value to be added to the gene.
-        #             random_value = uniform(-1.0, 1.0)
-        #
-        #             weight[idx, idy] = weight[idx, idy] + (random_value * 0.01)
-        #
-        # # return weight
-
         temp = list   # Cast to numpy array
         shape = temp.shape       # Store original shape
         temp = temp.flatten()    # Flatten to 1D
