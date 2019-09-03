@@ -1,4 +1,4 @@
-import neuralNetwork as nn
+import lib.neuralNetwork as nn
 
 class Bird ():
 

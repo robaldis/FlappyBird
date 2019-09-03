@@ -1,10 +1,13 @@
 import numpy as np
-from bird import Bird
+from lib.bird import Bird
 import random
+import json
 
 class GeneticAlgorithm():
-    def __init__(self, GEN_SIZE):
+    def __init__(self, GEN_SIZE, WIDTH, HEIGHT):
         self.GEN_SIZE = GEN_SIZE
+        self.WIDTH = WIDTH
+        self.HEIGHT = HEIGHT
         pass
 
     # Normalize the fitness
@@ -37,7 +40,7 @@ class GeneticAlgorithm():
         # Go back one to get the index you want
         index -= 1
         bird = savedBirds[index]
-        child = Bird(WIDTH,HEIGHT, bird.brain.copy()) # create a new bird with the the last bird brain
+        child = Bird(self.WIDTH,self.HEIGHT, bird.brain.copy()) # create a new bird with the the last bird brain
         # Mutate the childs brain
         child.mutate(0.2) # the probability that the weight will mutate
         return child # Return the child to add it to the list
@@ -53,3 +56,22 @@ class GeneticAlgorithm():
             birds.append(self.pickOne(savedBirds)) # create a new list of birds
 
         return birds
+
+
+    def saveBird(self,birds):
+        saveinfo = birds[0].brain
+        dict = {
+                "weights_ih" : saveinfo.weights_ih.tolist(),
+                "weights_ho" : saveinfo.weights_ho.tolist(),
+                "bias_h" : saveinfo.bias_h.tolist(),
+                "bias_o" : saveinfo.bias_o.tolist(),
+        }
+        # Writing JSON data
+        with open("FlappyGame/BestBirdBrain.json", 'w') as f:
+            json.dump(dict, f, indent = 4)
+
+
+    def readBird(self):
+        with open("FlappyGame/BestBirdBrain.json", "r") as f:
+            jsonData = json.load(f)
+        return jsonData
