@@ -1,3 +1,5 @@
+import pygame
+
 class TextElement():
     def __init__(self, font, text,x , y, colour = (0,0,0)):
         self.x = x
